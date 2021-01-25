@@ -1,23 +1,64 @@
-import logo from './logo.svg';
 import './App.css';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
-function App() {
+const App = () => {
+  const [data, setData] = useState('');
+  const tableStyle = {
+    'border': '1px solid black'
+  }
+  const minuteInMisc = 60000;
+  const myKey = '0ac0e7e967';
+  const baseUrl = 'https://www.live-rates.com/rates';
+
+  useEffect(() => {
+    if (!data) getData();
+
+    const updateData = setInterval(() => {
+      getData();
+    }, minuteInMisc);
+
+    return () => clearInterval(updateData);
+  }, [])
+
+  const getData = () => {
+    axios.get(`${baseUrl}`, { params: { key: myKey } })
+      .then(response => response.data)
+      .then(result => setData(result));
+  }
+
+  const renderTableData = () => {
+    const headersOb = data[0]
+    const headers = Object.keys(headersOb);
+    return data.map((item, index) => {
+      return (
+        <tr key={index}>
+          {headers.map((header, i) => {
+            return (<td key={i} style={tableStyle}>{item[`${header}`]}</td>)
+          })}
+        </tr>
+      )
+    })
+  }
+
+  const renderTableHeader = () => {
+    const headersOb = data[0]
+    const headers = Object.keys(headersOb);
+    return headers.map((header, index) => {
+      return <th style={tableStyle} key={index}>{header.toUpperCase()}</th>
+    })
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {data ?
+        (<table id='trades' style={tableStyle}>
+          <tbody>
+            <tr>{renderTableHeader()}</tr>
+            {renderTableData()}
+          </tbody>
+        </table>)
+        : ''}
     </div>
   );
 }
